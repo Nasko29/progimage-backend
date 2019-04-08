@@ -1,11 +1,12 @@
-from flask import Flask, request, redirect, abort, render_template, url_for
-import requests, datetime, math, boto3, os
+from flask import Flask, request, redirect, abort, render_template, url_for, jsonify
+import requests, datetime, math, boto3, os, json
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Key, Attr
 from aws_xray_sdk.core import xray_recorder
 from aws_xray_sdk.ext.flask.middleware import XRayMiddleware
 from werkzeug.utils import secure_filename
 from uuid import uuid4
+from models import Client, Image
 
 # initialize flask application
 app = Flask(__name__)
@@ -57,14 +58,34 @@ def index():
     
     return "", 200
 
-@app.route('/apikey', methods=['GET'])
-def index():
+@app.route('/apikey', methods=['GET','DELETE'])
+def apikey():
     """ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
      labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco 
      laboris nisi ut aliquip ex ea commodo consequat.
     """
-    
-    return "", 200
+
+    if(resquest.method == 'GET'):
+        
+        # create a new api key and db entry
+        newcomer = Client()
+
+        return jsonify(apikey=newcomer.apikey), 200
+
+    elif(resquest.method == 'DELETE'):
+
+        # get the client id
+        clientid = request.headers['Apikeyid']
+
+        # fetch the client
+        target = Client(clientid)
+
+        # delete the api key and the db entry
+        target.delete()
+        
+        return "", 200
+
+    return "",400
 
 @app.route('/upload', methods=['POST'])
 def upload():

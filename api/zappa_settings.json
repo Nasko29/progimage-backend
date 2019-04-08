@@ -13,6 +13,13 @@
         "xray_tracing": true,
         "context_header_mappings": {
             "apiKeyId": "identity.apiKeyId"
-        }
+        },
+        "extra_permissions" : [{
+            "Effect": "Allow",
+            "Action": [
+                "apigateway:*"
+            ],
+            "Resource": "arn:aws:apigateway:*::/*"
+        }]
     }
 }

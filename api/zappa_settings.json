@@ -1,0 +1,15 @@
+{
+    "dev": {
+        "app_function": "api.app",
+        "aws_region": "eu-west-1",
+        "profile_name": "default",
+        "project_name": "api",
+        "runtime": "python3.7",
+        "s3_bucket": "progimage-eu-west-1",
+        "keep_warm": true,
+        "keep_warm_expression": "rate(1 hour)",
+        "api_key_required": true,
+        "apigateway_enabled": true,
+        "xray_tracing": true
+    }
+}

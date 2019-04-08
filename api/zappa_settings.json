@@ -10,6 +10,9 @@
         "keep_warm_expression": "rate(1 hour)",
         "api_key_required": true,
         "apigateway_enabled": true,
-        "xray_tracing": true
+        "xray_tracing": true,
+        "context_header_mappings": {
+            "apiKeyId": "identity.apiKeyId"
+        }
     }
 }

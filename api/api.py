@@ -1,12 +1,12 @@
 from flask import Flask, request, redirect, abort, render_template, url_for, jsonify
-import requests, datetime, math, boto3, os, json
+import requests, datetime, math, boto3, os, json, sys
 from botocore.exceptions import ClientError
 from boto3.dynamodb.conditions import Key, Attr
 from aws_xray_sdk.core import xray_recorder
 from aws_xray_sdk.ext.flask.middleware import XRayMiddleware
 from werkzeug.utils import secure_filename
 from uuid import uuid4
-from models import Client, Image
+from progimagemodels import Client, Image
 
 # initialize flask application
 app = Flask(__name__)
@@ -50,6 +50,7 @@ def upload_to_s3(file, index, bucket, acl='public-read'):
 # Routes                                                                                  #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 @app.route('/', methods=['GET'])
+@xray_recorder.capture('index')
 def index():
     """ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
      labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco 
@@ -59,20 +60,21 @@ def index():
     return "", 200
 
 @app.route('/apikey', methods=['GET','DELETE'])
+@xray_recorder.capture('apikey')
 def apikey():
     """ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
      labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco 
      laboris nisi ut aliquip ex ea commodo consequat.
     """
 
-    if(resquest.method == 'GET'):
+    if(request.method == 'GET'):
         
         # create a new api key and db entry
         newcomer = Client()
 
         return jsonify(apikey=newcomer.apikey), 200
 
-    elif(resquest.method == 'DELETE'):
+    elif(request.method == 'DELETE'):
 
         # get the client id
         clientid = request.headers['Apikeyid']
@@ -88,6 +90,7 @@ def apikey():
     return "",400
 
 @app.route('/upload', methods=['POST'])
+@xray_recorder.capture('upload')
 def upload():
     """ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
      labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco 
@@ -124,10 +127,12 @@ def upload():
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 @app.errorhandler(404)
+@xray_recorder.capture('error404')
 def not_found(error):
    return "Error 404 Not Found"
 
 @app.errorhandler(500)
+@xray_recorder.capture('error500')
 def not_found(error):
    return "Error 500 Internal Server Error"
 

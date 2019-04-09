@@ -24,7 +24,7 @@ class Image:
             self.filename = filename
             create_image_entry(self)
         else: # image exists and needs to be retrieved
-            filename = get_image_entry(clientid,uid)['filename']
+            self.filename = get_image_entry(clientid,uid)['filename']
     
     # model methods
     def save(self):
@@ -39,7 +39,7 @@ class Image:
         # hashlib.sha256(open(location, 'rb').read()).hexdigest()
 
     def __eq__(self,other):
-        return (self.clientid == other.clientid) && (self.uid == other.uid) && (self.extension == other.extension)
+        pass
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #   Dynamodb functions                                                                    #
@@ -63,7 +63,7 @@ def create_image_entry(image):
 def get_image_entry(clientid, uid):
     
     response = dbimages.query(
-          KeyConditionExpression=Key('clientid').eq(clientid) && Key('uid').eq(uid)
+          KeyConditionExpression=Key('clientid').eq(clientid) & Key('uid').eq(uid)
     )
 
     return response['Items'][0]

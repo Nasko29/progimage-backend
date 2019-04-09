@@ -14,7 +14,7 @@ if sys.argv[-1] == 'publish':
     # PYPI now uses twine for package management.
     # For this to work you must first `$ pip3 install twine`
     os.system('python3 setup.py sdist bdist_wheel')
-    os.system('python3 -m twine upload  dist/*')
+    os.system('python3 -m twine upload --skip-existing dist/*')
     sys.exit()
     
 with open('requirements.txt') as f:
@@ -22,7 +22,7 @@ with open('requirements.txt') as f:
 
 setuptools.setup(
     name="progimagemodels",
-    version="0.0.1",
+    version="0.1.0",
     author="Nasko Grozdanov",
     author_email="antonasko@gmail.com",
     description="Python models for the ProgImage API",

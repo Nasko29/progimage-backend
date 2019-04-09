@@ -40,7 +40,7 @@ def file_extension(filename):
     Obtain the extension of a filename
 
     :param str filename: The filename
-    :return: the file extension as a string
+    :return: str the file extension
     '''
     return os.path.splitext(filename)[-1]
 

@@ -38,10 +38,6 @@ class Client:
     def __eq__(self,other):
         return self.id == other.id
 
-    # debugging
-    def __str__(self):
-        return "progimage client object"
-
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #   Dynamodb functions                                                                    #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -51,44 +47,47 @@ db = boto3.resource('dynamodb', region_name='eu-west-1', endpoint_url='http://dy
 dbclients = db.Table('Clients')
 
 def create_client_entry(client):
+
     item = {
         'id' : client.id,
         'apikey' : client.apikey,
         'images' : client.images
     }
     response = dbclients.put_item(Item = item)
-    print(response)
-    return response
 
-def get_client_entrdbclientsy(client):
+def get_client_entry(client):
+
     response = dbclients.query(
           KeyConditionExpression=Key('id').eq(client.id)
     )
-    print(response)
+
     return response
 
 def get_client_images(client):
+
     response = dbclients.query(
           KeyConditionExpression=Key('id').eq(client.id)
     )
-    print(response)
+
     return response['Items'][0]['images']
 
 def delete_client_entry(client):
+
     response = dbclients.delete_item(
          Key = { 'id' : client.id}
       )
-    print(response)
+
     return response
 
 def update_client_entry(client):
+
     response = dbclients.update_item(
           Key={'id': client.id},
           UpdateExpression="set images=:i",
           ExpressionAttributeValues={':i': client.images},
           ReturnValues="UPDATED_NEW"
       )
-    print(response)
+
     return response
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

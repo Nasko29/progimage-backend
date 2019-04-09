@@ -1,0 +1,18 @@
+{
+    "dev": {
+        "app_function": "auth.app",
+        "aws_region": "eu-west-1",
+        "profile_name": "default",
+        "project_name": "auth",
+        "runtime": "python3.7",
+        "s3_bucket": "progimage-eu-west-1",
+        "keep_warm": true,
+        "keep_warm_expression": "rate(1 hour)",
+        "api_key_required": false,
+        "apigateway_enabled": true,
+        "xray_tracing": true,
+        "context_header_mappings": {
+            "apiKeyId": "identity.apiKeyId"
+        }
+    }
+}

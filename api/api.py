@@ -7,6 +7,9 @@ from aws_xray_sdk.ext.flask.middleware import XRayMiddleware
 from werkzeug.utils import secure_filename
 from uuid import uuid4
 from progimagemodels import Client, Image
+from PIL import Image as Pillowimage
+from io import BytesIO
+from os import path
 
 # initialize flask application
 app = Flask(__name__)
@@ -83,7 +86,8 @@ def delete_client():
     target.delete()
 
     # delete all the files in s3 for this client
-    bucket = s3.Bucket(BUCKETNAME)
+    # bucket = s3.Bucket(BUCKETNAME)
+    bucket = boto3.resource('s3').Bucket(BUCKETNAME)
     bucket.objects.filter(Prefix=clientid+"/").delete()
     
     return "", 200
@@ -120,13 +124,15 @@ def upload():
         filename = secure_filename(file.filename)
 
         # generate file index [clientid] / [uuid] . [extension]
-        fileid = uuid4().hex
         ext = file_extension(filename)
         uid = uuid4().hex
         index = "/".join([clientid, uid, filename])
 
         # upload to s3
         upload_file_to_s3(file, index, BUCKETNAME)
+
+        # store in database
+        img = Image(uid,filename=filename,clientid=clientid)
 
         # generate response data
         data = {
@@ -137,13 +143,11 @@ def upload():
 
     return "", 403 
 
-@app.route('/api/', methods=['GET'])
+@app.route('/api', methods=['GET'])
 @xray_recorder.capture('api download file')
 def download():
     '''
-    Receive a file and upload it to the s3 bucket, document its existence in the
-    client's database entry and return a unique id that can be used to retrieve
-    the image.
+    Donwloads a file from the s3 bucket using a presigned url
 
     :param file file: the file object
     :return: the unique id of the file
@@ -157,21 +161,88 @@ def download():
     if uid is None :
         return "",403
 
-    # get the associated filename
-    # filename = 
-
-    # generate file index
-    # fileid = uuid4().hex
-    # ext = file_extension(filename)
-    # uid = uuid4().hex
-    # index = "/".join([clientid, uid, filename])
+    # get the associated file
+    img = Image(uid,clientid=clientid)
 
     # obtain a presigned url for the file
-    # url = s3.generate_presigned_url('get_object', Params = {'Bucket': BUCKETNAME, 'Key': index}, ExpiresIn = 100)
+    url = s3.generate_presigned_url('get_object', Params = {'Bucket': BUCKETNAME, 'Key': img.index}, ExpiresIn = 100)
 
     # redirect to the file
-    # return redirect(url, code=302)   
-    return "", 200  
+    return redirect(url)   
+
+@app.route('/api/convert/<extension>', methods=['GET'])
+@xray_recorder.capture('api download converted file')
+def convert(extension):
+    '''
+    Downloads a file form the s3 bucket after converting it to a specified format
+
+    :param file file: the file object
+    :return: the unique id of the file
+    '''
+
+    # Defining the buffer format
+    imageformat = 'JPEG'
+    if extension.lower() in ['.jpeg', '.jpg']:
+        imageformat = 'JPEG'
+    elif extension.lower() in ['.png']:
+        imageformat = 'PNG'
+    elif extension.lower() in ['.bmp']:
+        imageformat = 'BMP'
+    elif extension.lower() in ['.eps']:
+        imageformat = 'EPS'
+    else:
+        return "",403
+
+    # sanitize the target extension for string comparisons
+    target_extension = "." + extension.lower()
+
+    # get the client id
+    clientid = request.headers['Apikeyid']
+
+    # obtain file identifer
+    uid = request.args.get('uid', type=str)
+    if uid is None :
+        return "",403
+
+    # get the associated file in original format
+    img = Image(uid,clientid=clientid)
+
+    # verify whether conversion is necessary
+    if target_extension == img.extension:
+        url = s3.generate_presigned_url('get_object', Params = {'Bucket': BUCKETNAME, 'Key': img.index}, ExpiresIn = 100)
+        return redirect(url)
+    
+    # download file and give it the name it will carry
+    newname = img.filename.replace(img.extension,target_extension)
+
+    # Grabs the source file
+    obj = boto3.resource('s3').Object(
+        bucket_name=BUCKETNAME,
+        key=img.index
+    )
+    obj_body = obj.get()['Body'].read()
+
+    # convert file
+    imgreader = Pillowimage.open(BytesIO(obj_body))
+    imgbuffer = BytesIO()
+    imgreader.save(imgbuffer, imageformat)
+    imgbuffer.seek(0)
+
+    # create new image
+    imgentry = Image(clientid,uid,newname)
+
+    # Uploading the image
+    obj = boto3.resource('s3').Object(
+        bucket_name=BUCKETNAME,
+        key=imgentry.index
+    )
+    obj.put(Body=imgbuffer)
+
+    # obtain a presigned url for the file
+    url = s3.generate_presigned_url('get_object', Params = {'Bucket': BUCKETNAME, 'Key': imgentry.index}, ExpiresIn = 100)
+
+    # redirect to the file
+    return redirect(url, code=301)   
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #   Errors                                                                                #

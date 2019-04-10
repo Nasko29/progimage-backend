@@ -15,16 +15,23 @@ class Image:
         return "/".join([self.clientid, self.uid, self.filename])
 
     # constructors
-    def __init__(self, clientid, uid, filename=None):
+    def __init__(self, uid, extension=None, filename=None, clientid=None):
 
-        self.clientid = clientid
         self.uid = uid
-
+        if(clientid):
+            self.clientid = clientid
         if(filename): # image doesn't exist and needs to be registered
             self.filename = filename
             create_image_entry(self)
         else: # image exists and needs to be retrieved
-            self.filename = get_image_entry(clientid,uid)['filename']
+            if(extension):
+                entry = get_image_entry_with_extension(clientid,extension)
+                self.filename = entry['filename']
+                self.clientid = entry['clientid']
+            else:
+                entry = get_image_entry(uid)
+                self.filename = entry['filename']
+                self.clientid = entry['clientid']
     
     # model methods
     def save(self):
@@ -52,18 +59,26 @@ dbimages = db.Table('Images')
 def create_image_entry(image):
 
     item = {
-        'clientid' : image.clientid,
         'uid' : image.uid,
-        'filename' : image.filename,
-        'extension' : image.extension
+        'extension' : image.extension,
+        'clientid' : image.clientid,
+        'filename' : image.filename
     }
-
+    print(item)
     response = dbimages.put_item(Item = item)
 
-def get_image_entry(clientid, uid):
+def get_image_entry_with_extension(uid, extension):
     
     response = dbimages.query(
-          KeyConditionExpression=Key('clientid').eq(clientid) & Key('uid').eq(uid)
+          KeyConditionExpression=Key('uid').eq(uid) & Key('extension').eq(extension)
+    )
+
+    return response['Items'][0]
+
+def get_image_entry(uid):
+    
+    response = dbimages.query(
+          KeyConditionExpression=Key('uid').eq(uid)
     )
 
     return response['Items'][0]
@@ -72,7 +87,7 @@ def delete_image_entry(image):
     
     response = dbimages.delete_item(
         Key={
-            'clientid': image.clientid,
-            'uid': image.uid
+            'uid': image.clientid,
+            'extension': image.extension
         }
     )

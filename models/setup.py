@@ -22,7 +22,7 @@ with open('requirements.txt') as f:
 
 setuptools.setup(
     name="progimagemodels",
-    version="0.1.1",
+    version="0.1.2",
     author="Nasko Grozdanov",
     author_email="antonasko@gmail.com",
     description="Python models for the ProgImage API",

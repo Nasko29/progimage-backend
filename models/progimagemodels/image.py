@@ -87,7 +87,7 @@ def delete_image_entry(image):
     
     response = dbimages.delete_item(
         Key={
-            'uid': image.clientid,
+            'uid': image.uid,
             'extension': image.extension
         }
     )

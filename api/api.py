@@ -190,8 +190,6 @@ def convert(extension):
         imageformat = 'BMP'
     elif extension.lower() in ['.eps']:
         imageformat = 'EPS'
-    else:
-        return "",403
 
     # sanitize the target extension for string comparisons
     target_extension = "." + extension.lower()
@@ -229,7 +227,7 @@ def convert(extension):
     imgbuffer.seek(0)
 
     # create new image
-    imgentry = Image(clientid,uid,newname)
+    imgentry = Image(uid,filename=newname,clientid=clientid)
 
     # Uploading the image
     obj = boto3.resource('s3').Object(

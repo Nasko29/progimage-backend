@@ -1,2 +1,2 @@
-Pillow==6.0.0
+Pillow==6.2.0
 pytest==4.4.0
